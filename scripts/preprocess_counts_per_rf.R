@@ -10,10 +10,18 @@
 #
 #==============================================================================
 
+rm(list = ls())
+
 suppressPackageStartupMessages({
   library(optparse)
-  library(fenora)
+  #library(fenora)
 })
+
+library(data.table)
+library(aroma.light)
+source('/hpc/compgen/users/mthiecke/workspace/fenora/R/preprocess_counts_per_rf.R')
+source('/hpc/compgen/users/mthiecke/workspace/fenora/R/varistran.R')
+source('/hpc/compgen/users/mthiecke/workspace/fenora/R/cdc_functions.R')
 
 debug <- TRUE
 

@@ -49,8 +49,9 @@ vst_methods <- list(
         is.logish        = TRUE,
         needs.dispersion = TRUE,
         vst              = function(x, dispersion)
-            .log2ish_asinh(sqrt(x + 0.375),
-                            sqrt(1 / (1 / dispersion - 0.75))) * 2.0
+            .log2ish_asinh(
+              a = sqrt(x + 0.375), 
+              b = sqrt(1 / (1 / (dispersion - 0.75)))) * 2.0
     )
 )
 

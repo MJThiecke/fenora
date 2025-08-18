@@ -42,26 +42,38 @@ preprocess_counts_per_rf <- function(
   }
 
   message("Reading input files...")
-  rMap <- read.table(rMap_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  cMatr <- read.table(cMatr_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE, check.names = FALSE)
-  chrInfo <- read.table(chrInfo_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  rMap <- fread(rMap_file, header = TRUE)
+  rMap[, fid := paste0(chr, '_', start, '_', end)]
+  cMatr <- fread(cMatr_file, header = TRUE, sep = "\t")
+  # Get the feature names from the cMatr header
+  # The trailing columns must contain the feature counts
+  feature_ids <- colnames(cMatr)[4:length(colnames(cMatr))]
+  
+  cMatr[, fid := paste0(chr, '_', start, '_', end)]
+  chrInfo <- fread(chrInfo_file, header = TRUE, sep = "\t")
 
   message("Filtering restriction fragments by length...")
   rf_lengths <- rMap$end - rMap$start + 1
   keep_idx <- rf_lengths >= minLen & rf_lengths <= maxLen
   rMap <- rMap[keep_idx, ]
-  cMatr <- cMatr[cMatr$rfID %in% rMap$rfID, ]
-
+  
+  # Select only features in the rmap
+  cMatr <- cMatr[(fid %in% rMap$fid), ]
+  
   message("Performing Anscombe transformation...")
-  # HERE: This does not work. Need to drop columns chr, start, end
-  counts_only <- cMatr[, -1, drop = FALSE]
+  counts_only <- cMatr[, feature_ids, with = FALSE]
+  print(counts_only)
   if (fixDisp == -1) {
     # Estimate dispersion (placeholder - replace with your actual estimation method)
     disp <- edgeR::estimateDisp(counts_only)$common.dispersion
   } else {
     disp <- fixDisp
   }
-  counts_transformed <- aroma.light::anscombeTransform(counts_only, dispersion = disp)
+  
+  counts_transformed <- vst(counts_only, method = "anscombe.nb", dispersion = disp)
+  
+  print(counts_transformed)
+  stop('intentional')
 
   if (qNorm) {
     message("Performing between-chromosome quantile normalisation...")
