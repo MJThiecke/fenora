@@ -74,6 +74,10 @@ preprocess_counts_per_rf <- function(
   
   print(counts_transformed)
   stop('intentional')
+  #HERE
+  # Fix the quantile normalisation. The method expects: rfID, count
+  # So, put the rfIDs in front of counts_transformed
+  # And I think I should provide the transformed counts, one feature at a time
 
   if (qNorm) {
     message("Performing between-chromosome quantile normalisation...")
