@@ -15,7 +15,7 @@ preprocess_counts_per_rf(
   buildPlots = FALSE,
   chrLenQ = 5L,
   fixDisp = -1,
-  exIDs = "3",
+  feature_ids = NA,
   seed = -1
 )
 }
@@ -40,7 +40,7 @@ preprocess_counts_per_rf(
 
 \item{fixDisp}{Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically}
 
-\item{exIDs}{Comma-separated sample IDs or integer number of samples for example plots}
+\item{feature_ids}{Comma-separated sample IDs}
 
 \item{seed}{Random seed; -1 for no fixed seed}
 }

@@ -13,7 +13,7 @@
 #' @param buildPlots Logical; generate plots showing normalisation effects
 #' @param chrLenQ Number of chromosome length quantiles for plotting
 #' @param fixDisp Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically
-#' @param exIDs Comma-separated sample IDs or integer number of samples for example plots
+#' @param feature_ids Comma-separated sample IDs
 #' @param seed Random seed; -1 for no fixed seed
 #'
 #' @return Invisibly returns processed counts matrix
@@ -29,7 +29,7 @@ preprocess_counts_per_rf <- function(
   buildPlots = FALSE,
   chrLenQ = 5L,
   fixDisp = -1,
-  exIDs = "3",
+  feature_ids = NA,
   seed = -1
 ) {
   # Ensure output directory exists
@@ -45,9 +45,17 @@ preprocess_counts_per_rf <- function(
   rmap <- fread(rmap_file, header = TRUE)
   rmap[, fid := paste0(chr, '_', start, '_', end)]
   cMatr <- fread(cMatr_file, header = TRUE, sep = "\t")
-  # Get the feature names from the cMatr header
-  # The trailing columns must contain the feature counts
-  feature_ids <- colnames(cMatr)[4:length(colnames(cMatr))]
+  
+  # If no feature IDs were supplied, attempt to get them from the cMatr header:
+  # the trailing columns should contain the feature counts
+  if(is.na(feature_ids)){
+    feature_ids <- colnames(cMatr)[4:length(colnames(cMatr))]
+  } else {
+    feature_ids <- unlist(strsplit(feature_ids, ","))
+    if(!all(feature_ids %in% colnames(cMatr))){
+      stop("Feature IDs provided must match columns in counts matrix")
+    }
+  }
   
   cMatr[, fid := paste0(chr, '_', start, '_', end)]
   chrInfo <- fread(chrInfo_file, header = TRUE, sep = "\t")
@@ -96,9 +104,9 @@ preprocess_counts_per_rf <- function(
   
   # Build plots that show the effect of anscombe and quantile transformations
   if (buildPlots) {
-    
     message('Plotting transformation effects')
     
+    # The design determines the features to include
     design <- data.table(
       feature = feature_ids,
       anscombe = paste0(feature_ids, '_ansc')
@@ -107,21 +115,33 @@ preprocess_counts_per_rf <- function(
       design[, q_norm := paste0(anscombe, '_qnorm')]
     }
     
-    fn_out = 'example_plot'
-    plot_transform_effects(feature_dat = cMatr,
-                           design = design,
-                           fn_out = fn_out, chr_sel = 'chr1')
+    # Build test plot
+    plot_transform_effects(
+      feature_dat = cMatr,
+      design = design,
+      fn_out = file.path(outDir, "'example_plot'"))
     
     message('Done')
-    
   }
 
   message("Saving processed counts...")
-  processed <- cbind(rfID = cMatr$rfID, counts_transformed)
+  
   output_file <- file.path(outDir, "processed_counts.txt")
-  write.table(processed, output_file, sep = "\t", quote = FALSE, row.names = FALSE)
-
+  cols_out <- c(
+    'chr', 'start', 'end', 
+    feature_ids, paste0(feature_ids, '_ansc'))
+  if(qNorm){
+    cols_out <- c(cols_out, paste0(feature_ids, '_ansc_qnorm'))
+  }
+  
+  fwrite(
+    cMatr[, cols_out, with = FALSE], 
+    file = output_file, 
+    append = FALSE, quote = FALSE, 
+    sep = '\t', eol = '\n', na = 'NA', dec = '.', 
+    row.names = FALSE, col.names = TRUE, scipen = 999999)
+  
   message("Preprocessing complete: ", output_file)
-  invisible(processed)
+  
 }
 

@@ -102,6 +102,7 @@ normalizeQuantile.betweenChr <- function(feature_dat,
 #' @param feature_dat data.table with data columns to plot
 #' @param design table with design information
 #' @param fn_out output file name
+#' @param chr_sel example chromosome to plot
 #' @import data.table
 #' @import ggplot2
 #' @import ggrain
@@ -121,7 +122,7 @@ plot_transform_effects <- function(feature_dat,
     message("Selecting ", chr_sel, " for plotting")
   }
   
-  # This warns about coersion. Suppress that
+  # This warns about coercion. Suppress that
   feature_dat_m <- suppressWarnings(melt(
     data = feature_dat[(chr %in% chr_sel), ], 
     id.vars = c('fid', 'chr'), 
@@ -135,6 +136,7 @@ plot_transform_effects <- function(feature_dat,
     geom_rain()
   
   fn_out <- paste0(fn_out, '_', chr_sel, '.pdf')
+  
   pdf(file = fn_out, width = 10, height = 6)
   print(plot_out)
   dev.off()

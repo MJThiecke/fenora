@@ -12,6 +12,8 @@ plot_transform_effects(feature_dat, design, fn_out, chr_sel = "chr11")
 \item{design}{table with design information}
 
 \item{fn_out}{output file name}
+
+\item{chr_sel}{example chromosome to plot}
 }
 \description{
 Plot the transformed data

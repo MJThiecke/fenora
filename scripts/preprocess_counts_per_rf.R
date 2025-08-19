@@ -89,8 +89,11 @@ preprocess_counts_per_rf(
   buildPlots    = args$buildPlots,
   chrLenQ       = args$chrLenQ,
   fixDisp       = args$fixDisp,
-  exIDs         = args$exIDs,
+  feature_ids   = args$exIDs,
   seed          = args$seed
 )
+
+# TODO
+# Regress out chromosome length effects
 
 message("Preprocessing complete")
