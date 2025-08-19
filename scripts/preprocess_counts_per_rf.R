@@ -69,7 +69,7 @@ if (!debug) {
     buildPlots = TRUE,
     chrLenQ = 5L,
     fixDisp = -1,
-    exIDs = "H3K4me1,H3K27ac",
+    exIDs = "h3k4me1,h3k27ac",
     seed = 1337L
   )
 }
@@ -77,9 +77,9 @@ if (!debug) {
 # Set working directory
 setwd(args$wd)
 
-# Call package function
+# Run pre-processing
 preprocess_counts_per_rf(
-  rMap_file     = args$rMap,
+  rmap_file     = args$rMap,
   cMatr_file    = args$cMatr,
   chrInfo_file  = args$chrInfo,
   outDir        = args$outDir,

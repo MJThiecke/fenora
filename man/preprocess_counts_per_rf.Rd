@@ -5,7 +5,7 @@
 \title{Preprocess ChIP-Seq counts per restriction fragment (RF)}
 \usage{
 preprocess_counts_per_rf(
-  rMap_file,
+  rmap_file,
   cMatr_file,
   chrInfo_file,
   outDir,
@@ -20,7 +20,7 @@ preprocess_counts_per_rf(
 )
 }
 \arguments{
-\item{rMap_file}{Path to restriction digestion map (columns: chr, start, end, rfID)}
+\item{rmap_file}{Path to restriction digestion map (columns: chr, start, end, rfID)}
 
 \item{cMatr_file}{Path to counts per RF matrix (columns: rfID, counts_target1, ...)}
 

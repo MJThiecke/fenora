@@ -5,20 +5,20 @@
 \title{Quantile normalize count data between chromosomes}
 \usage{
 \method{normalizeQuantile}{betweenChr}(
-  countData,
+  feature_dat,
   rmap,
-  chrs = c(1:22, "X", "Y"),
-  excludeVals = FALSE
+  chrs = paste0("chr", c(1:22, "X", "Y")),
+  exclude_values = FALSE
 )
 }
 \arguments{
-\item{countData}{data.table with columns rfID and counts}
+\item{feature_dat}{data.table with columns fid and counts}
 
-\item{rmap}{data.table with rfID and chr}
+\item{rmap}{data.table with fid and chr}
 
-\item{chrs}{vector of chromosomes}
+\item{chrs}{vector of chromosomes to normalise between}
 
-\item{excludeVals}{boolean or numeric vector length 2}
+\item{exclude_values}{boolean or numeric vector length 2}
 }
 \value{
 data.table with normalized counts

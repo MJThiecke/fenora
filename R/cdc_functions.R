@@ -42,49 +42,103 @@ promptUser_yn <- function(){
 
 #' Quantile normalize count data between chromosomes
 #'
-#' @param countData data.table with columns rfID and counts
-#' @param rmap data.table with rfID and chr
-#' @param chrs vector of chromosomes
-#' @param excludeVals boolean or numeric vector length 2
+#' @param feature_dat data.table with columns fid and counts
+#' @param rmap data.table with fid and chr
+#' @param chrs vector of chromosomes to normalise between
+#' @param exclude_values boolean or numeric vector length 2
 #' @return data.table with normalized counts
 #' @import data.table
 #' @import aroma.light
 #' @export
-normalizeQuantile.betweenChr <- function(countData, rmap, chrs = c(1:22, "X", "Y"), excludeVals = FALSE){
-  sample.ID <- colnames(countData)[2]
-  colnames(countData)[2] <- "value"
+normalizeQuantile.betweenChr <- function(feature_dat, 
+                                         rmap, 
+                                         chrs = paste0('chr', c(1:22, "X", "Y")), 
+                                         exclude_values = FALSE){
+  
+  # Modify the feature id, but keep it to place it back later
+  orig_feature_id <- colnames(feature_dat)[2]
+  colnames(feature_dat)[2] <- "value"
+  
+  data.table::setkey(feature_dat, fid)
+  data.table::setkey(rmap, fid)
+  fdat_mrg <- merge.data.table(
+    x = feature_dat, y = rmap, by = 'fid', all.x = TRUE)
+  
+  # Get the desired chromosomes that are present in the feature data
+  chrs_sel <- fdat_mrg[, unique(chr)]
+  chrs_sel <- chrs_sel[chrs_sel %in% chrs]
 
-  data.table::setkey(countData, rfID)
-  data.table::setkey(rmap, rfID)
-  countData <- countData[(rmap), ][, .(chr, value), by = "rfID"]
-
-  valPerChr <- list()
-  for(current.chr in chrs){
-    vals <- countData[(chr == current.chr), value]
-    if(is.logical(excludeVals)){
-      if(excludeVals){
+  val_per_chr <- list()
+  for(current_chr in chrs_sel){
+    vals <- fdat_mrg[(chr == current_chr), value]
+    if(is.logical(exclude_values)){
+      if(exclude_values){
         minVal <- min(vals)
         vals[vals <= minVal] <- NA
       }
-    } else if(is.numeric(excludeVals) & length(excludeVals) == 2){
-      vals[vals >= excludeVals[1] & vals <= excludeVals[2]] <- NA
+    } else if(is.numeric(exclude_values) & length(exclude_values) == 2){
+      vals[vals >= exclude_values[1] & vals <= exclude_values[2]] <- NA
     } else {
-      stop("excludeVals must be boolean or numeric vector of length 2")
+      stop("exclude_values must be boolean or numeric vector of length 2 (lower- and upper bound)")
     }
-    valPerChr[[current.chr]] <- vals
+    val_per_chr[[current_chr]] <- vals
   }
 
-  valPerChr.qnorm <- aroma.light::normalizeQuantile(valPerChr)
+  val_per_chr.qnorm <- aroma.light::normalizeQuantile(val_per_chr)
 
-  countData[, value_qnorm := value]
-  for(current.chr in chrs){
-    idx <- which(countData$chr == current.chr)
-    countData$value_qnorm[idx] <- valPerChr.qnorm[[current.chr]]
-    countData$value_qnorm[is.na(countData$value_qnorm)] <- countData$value[is.na(countData$value_qnorm)]
+  fdat_mrg[, value_qnorm := NA_real_]
+  for(current_chr in chrs_sel){
+    fdat_mrg[(chr == current_chr), 
+             value_qnorm := val_per_chr.qnorm[[current_chr]]]
   }
 
-  data.table::setkey(countData, rfID)
-  countData[, .(rfID, value, value_qnorm)]
+  fdat_out <- fdat_mrg[, .(fid, value_qnorm)]
+  data.table::setnames(fdat_out, old = 'value_qnorm', new = paste0(orig_feature_id, '_qnorm'))
+  return(fdat_out)
+}
+
+#' Plot the transformed data
+#' 
+#' @param feature_dat data.table with data columns to plot
+#' @param design table with design information
+#' @param fn_out output file name
+#' @import data.table
+#' @import ggplot2
+#' @import ggrain
+plot_transform_effects <- function(feature_dat,
+                                   design,
+                                   fn_out,
+                                   chr_sel = 'chr11'){
+  
+  design[, c(colnames(design)), with = FALSE]
+  design <- as.list(design)
+  names(design) <- NULL
+  design <- unlist(design)
+  
+  if(!chr_sel %in% feature_dat$chr){
+    message("Did not find ", chr_sel, " in feature_dat")
+    chr_sel <- feature_dat[, unique(chr)][1]
+    message("Selecting ", chr_sel, " for plotting")
+  }
+  
+  # This warns about coersion. Suppress that
+  feature_dat_m <- suppressWarnings(melt(
+    data = feature_dat[(chr %in% chr_sel), ], 
+    id.vars = c('fid', 'chr'), 
+    measure.vars = design,
+    variable.name = 'type', value.name = 'value'
+    ))
+  
+  feature_dat_m[, type := factor(type, levels = design)]
+  
+  plot_out <- ggplot(data = feature_dat_m, aes(x = type, y = value)) +
+    geom_rain()
+  
+  fn_out <- paste0(fn_out, '_', chr_sel, '.pdf')
+  pdf(file = fn_out, width = 10, height = 6)
+  print(plot_out)
+  dev.off()
+  
 }
 
 #' Perform regression on score per restriction fragment

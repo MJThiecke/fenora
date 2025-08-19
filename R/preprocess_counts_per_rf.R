@@ -3,7 +3,7 @@
 #' Applies Anscombe variance stabilising transformation, optional quantile normalisation,
 #' and generates optional diagnostic plots.
 #'
-#' @param rMap_file Path to restriction digestion map (columns: chr, start, end, rfID)
+#' @param rmap_file Path to restriction digestion map (columns: chr, start, end, rfID)
 #' @param cMatr_file Path to counts per RF matrix (columns: rfID, counts_target1, ...)
 #' @param chrInfo_file Path to chromosome info file (columns: chr, len, optional ploidy)
 #' @param outDir Output directory for processed data and plots
@@ -19,7 +19,7 @@
 #' @return Invisibly returns processed counts matrix
 #' @export
 preprocess_counts_per_rf <- function(
-  rMap_file,
+  rmap_file,
   cMatr_file,
   chrInfo_file,
   outDir,
@@ -42,8 +42,8 @@ preprocess_counts_per_rf <- function(
   }
 
   message("Reading input files...")
-  rMap <- fread(rMap_file, header = TRUE)
-  rMap[, fid := paste0(chr, '_', start, '_', end)]
+  rmap <- fread(rmap_file, header = TRUE)
+  rmap[, fid := paste0(chr, '_', start, '_', end)]
   cMatr <- fread(cMatr_file, header = TRUE, sep = "\t")
   # Get the feature names from the cMatr header
   # The trailing columns must contain the feature counts
@@ -53,12 +53,12 @@ preprocess_counts_per_rf <- function(
   chrInfo <- fread(chrInfo_file, header = TRUE, sep = "\t")
 
   message("Filtering restriction fragments by length...")
-  rf_lengths <- rMap$end - rMap$start + 1
+  rf_lengths <- rmap$end - rmap$start + 1
   keep_idx <- rf_lengths >= minLen & rf_lengths <= maxLen
-  rMap <- rMap[keep_idx, ]
+  rmap <- rmap[keep_idx, ]
   
   # Select only features in the rmap
-  cMatr <- cMatr[(fid %in% rMap$fid), ]
+  cMatr <- cMatr[(fid %in% rmap$fid), ]
   
   message("Performing Anscombe transformation...")
   counts_only <- cMatr[, feature_ids, with = FALSE]
@@ -71,32 +71,49 @@ preprocess_counts_per_rf <- function(
   }
   
   counts_transformed <- vst(counts_only, method = "anscombe.nb", dispersion = disp)
+  colnames(counts_transformed) <- paste0(colnames(counts_transformed), '_ansc')
   
-  print(counts_transformed)
-  stop('intentional')
-  #HERE
-  # Fix the quantile normalisation. The method expects: rfID, count
-  # So, put the rfIDs in front of counts_transformed
-  # And I think I should provide the transformed counts, one feature at a time
-
+  # Add transformed counts to cMatr
+  cMatr <- cbind(cMatr, counts_transformed)
+  
+  # Normalise quantiles between chromosomes
+  # This is relevant when dealing with data with aneuploid origin
   if (qNorm) {
     message("Performing between-chromosome quantile normalisation...")
-    counts_transformed <- normalizeQuantile.betweenChr(
-      counts_transformed,
-      chrInfo = chrInfo,
-      rMap = rMap
-    )
+    for(current_id in feature_ids){
+      
+      current_fdat <- cMatr[, c('fid', paste0(current_id, '_ansc')), with = FALSE]
+      
+      counts_transformed <- normalizeQuantile.betweenChr(
+        feature_dat = current_fdat,
+        rmap = rmap
+      )
+      
+      # Add the quantile-normalised data to cMatr
+      cMatr <- merge.data.table(x = cMatr, y = counts_transformed, by = 'fid')
+    }
   }
-
+  
+  # Build plots that show the effect of anscombe and quantile transformations
   if (buildPlots) {
-    message("Generating diagnostic plots...")
-    plot_between_chr_norm(
-      counts_transformed,
-      chrInfo = chrInfo,
-      rMap = rMap,
-      chrLenQ = chrLenQ,
-      exIDs = exIDs
+    
+    message('Plotting transformation effects')
+    
+    design <- data.table(
+      feature = feature_ids,
+      anscombe = paste0(feature_ids, '_ansc')
     )
+    if(qNorm){
+      design[, q_norm := paste0(anscombe, '_qnorm')]
+    }
+    
+    fn_out = 'example_plot'
+    plot_transform_effects(feature_dat = cMatr,
+                           design = design,
+                           fn_out = fn_out, chr_sel = 'chr1')
+    
+    message('Done')
+    
   }
 
   message("Saving processed counts...")
