@@ -10,13 +10,15 @@ getQuantile <- function(val, qTable){
 
 #' Write data.table to file with preferred settings
 #'
-#' @param x data.table
+#' @param x a data.table object
 #' @param file output file path
 #' @export
-myfwrite <- function(x, file){
-  data.table::fwrite(x, file,
-                     quote = FALSE, sep = "\t", eol = "\n",
-                     na = "NA", dec = ".", row.names = FALSE, col.names = TRUE)
+fwrite_tsv <- function(x, file){
+  data.table::fwrite(
+    x, file, 
+    append = FALSE, quote = FALSE, 
+    sep = "\t", eol = "\n", na = "NA", dec = ".", 
+    row.names = FALSE, col.names = TRUE, scipen = 999999)
 }
 
 #' Prompt user for a yes/no answer

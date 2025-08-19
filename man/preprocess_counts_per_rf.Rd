@@ -6,46 +6,43 @@
 \usage{
 preprocess_counts_per_rf(
   rmap_file,
-  cMatr_file,
-  chrInfo_file,
-  outDir,
-  minLen = 100L,
-  maxLen = 50000L,
-  qNorm = FALSE,
-  buildPlots = FALSE,
-  chrLenQ = 5L,
-  fixDisp = -1,
-  feature_ids = NA,
+  fn_counts,
+  fn_chr_info,
+  dir_out,
+  thresh_len_min = 100L,
+  thresh_len_max = 50000L,
+  perform_qnorm = FALSE,
+  plot_transformations = FALSE,
+  fixed_dispersion = -1,
+  feature_ids = "all",
   seed = -1
 )
 }
 \arguments{
-\item{rmap_file}{Path to restriction digestion map (columns: chr, start, end, rfID)}
+\item{rmap_file}{Path to restriction digestion map (columns: chr, start, end)}
 
-\item{cMatr_file}{Path to counts per RF matrix (columns: rfID, counts_target1, ...)}
+\item{fn_counts}{Path to counts per interval table (columns: chr, start, end, counts_target1, ..., counts_targetN)}
 
-\item{chrInfo_file}{Path to chromosome info file (columns: chr, len, optional ploidy)}
+\item{fn_chr_info}{Path to chromosome info file (columns: chr, len, optional ploidy)}
 
-\item{outDir}{Output directory for processed data and plots}
+\item{dir_out}{Output directory for processed data and plots}
 
-\item{minLen}{Minimum RF length in bp (default: 100)}
+\item{thresh_len_min}{Minimum RF length in bp (default: 100)}
 
-\item{maxLen}{Maximum RF length in bp (default: 50000)}
+\item{thresh_len_max}{Maximum RF length in bp (default: 50000)}
 
-\item{qNorm}{Logical; perform quantile normalisation between chromosomes}
+\item{perform_qnorm}{Logical; perform quantile normalisation between chromosomes}
 
-\item{buildPlots}{Logical; generate plots showing normalisation effects}
+\item{plot_transformations}{Logical; generate plots showing normalisation effects}
 
-\item{chrLenQ}{Number of chromosome length quantiles for plotting}
-
-\item{fixDisp}{Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically}
+\item{fixed_dispersion}{Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically}
 
 \item{feature_ids}{Comma-separated sample IDs}
 
 \item{seed}{Random seed; -1 for no fixed seed}
 }
 \value{
-Invisibly returns processed counts matrix
+Void
 }
 \description{
 Applies Anscombe variance stabilising transformation, optional quantile normalisation,
