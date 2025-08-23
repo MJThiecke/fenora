@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
   library(fenora)
 })
 
-debug <- TRUE
+debug <- FALSE
 
 # Define options
 option_list <- list(
