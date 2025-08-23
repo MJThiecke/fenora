@@ -27,6 +27,8 @@ option_list <- list(
               help = "Working directory [default: current dir]"),
   make_option(c("-o", "--outDir"), type = "character", default = ".",
               help = "Output directory [default: current dir]"),
+  make_option(c("-f", "--fnOut"), type = "character", default = "transf_fig",
+              help = "Output file name for transformation figures"),
   make_option(c("-r", "--intervalMap"), type = "character", default = "GRCh37_HindIII.rmap",
               help = "Bed-like file containing the intervals (required columns: chr, start, end)"),
   make_option(c("-c", "--cMatr"), type = "character",
@@ -41,8 +43,8 @@ option_list <- list(
               help = "Perform quantile normalisation between chromosomes [default: %default]"),
   make_option("--buildPlots", type = "logical", default = FALSE,
               help = "Build figures showing effect of transformations [default: %default]"),
-  # make_option("--chrLenQ", type = "integer", default = 5,
-  #             help = "Number of chromosome length quantiles for plotting [default: %default]"),
+  make_option("--transfToFile", type = "logical", default = FALSE,
+              help = "Write transformed data to file [default: %default]"),
   make_option("--fixDisp", type = "double", default = -1,
               help = "Fixed dispersion parameter for Anscombe transformation; set -1 to estimate automatically [default: %default]"),
   make_option("--featureIDs", type = "character", default = 'all',
@@ -63,11 +65,12 @@ if (!debug) {
     intervalMap = "data/GRCh37_HindIII.rmap",
     cMatr = "data/test_counts.tsv",
     chrInfo = "data/chromosome_info_default.txt",
+    fnOut = "test",
     minLen = 100L,
     maxLen = 50000L,
     qNorm = TRUE,
     buildPlots = TRUE,
-    # chrLenQ = 5L,
+    transfToFile = TRUE,
     fixDisp = -1,
     featureIDs = 'all',
     seed = 1337L
@@ -78,20 +81,36 @@ if (!debug) {
 setwd(args$wd)
 
 # Run pre-processing
-preprocess_counts_per_rf(
-  rmap_file = args$intervalMap,
+preproc_dat <- preprocess_counts_per_rf(
   fn_counts = args$cMatr,
   fn_chr_info = args$chrInfo,
   dir_out = args$outDir,
+  fn_stub = args$fnOut,
   thresh_len_min = args$minLen,
   thresh_len_max = args$maxLen,
   perform_qnorm = args$qNorm,
   plot_transformations = args$buildPlots,
+  write_transf_to_file = args$transfToFile,
   fixed_dispersion = args$fixDisp,
   feature_ids = args$featureIDs,
   seed = args$seed
 )
 
+
 # Regress out chromosome length effects
 # TODO
-regressDistance()
+regressDistance(
+  score_per_frag = preproc_dat$preproc, 
+  feature_ids = preproc_dat$feature_ids,
+  rmap = args$intervalMap, 
+  regrType = "ols",
+  isRef = FALSE,
+  plotResids = FALSE,
+  outDir = args$outDir,
+  include = c(0, 1),
+  sel = NA
+  )
+  
+  
+  
+  

@@ -5,18 +5,19 @@
 \title{Perform regression on score per restriction fragment}
 \usage{
 regressDistance(
-  scorePerRF,
+  score_per_frag,
+  feature_ids,
   rmap,
   regrType = "ols",
   isRef = FALSE,
   plotResids = FALSE,
   outDir = getwd(),
-  exclude = FALSE,
+  include = FALSE,
   sel = NA
 )
 }
 \arguments{
-\item{scorePerRF}{data.table with rfID and counts}
+\item{score_per_frag}{data.table with preprocessed counts per fragment}
 
 \item{rmap}{data.table with rfID, chr, len}
 
@@ -28,7 +29,7 @@ regressDistance(
 
 \item{outDir}{output directory}
 
-\item{exclude}{FALSE or numeric vector of length 2}
+\item{include}{FALSE or numeric vector of length 2: include scores in interval}
 
 \item{sel}{numeric vector of row indices}
 }

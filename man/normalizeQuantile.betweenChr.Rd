@@ -6,19 +6,16 @@
 \usage{
 \method{normalizeQuantile}{betweenChr}(
   feature_dat,
-  rmap,
   chrs = paste0("chr", c(1:22, "X", "Y")),
-  exclude_values = FALSE
+  value_col
 )
 }
 \arguments{
 \item{feature_dat}{data.table with columns fid and counts}
 
-\item{rmap}{data.table with fid and chr}
-
 \item{chrs}{vector of chromosomes to normalise between}
 
-\item{exclude_values}{boolean or numeric vector length 2}
+\item{value_col}{name of the column in feature_dat that contains the values to normalize}
 }
 \value{
 data.table with normalized counts

@@ -4,14 +4,14 @@
 \alias{plot_transform_effects}
 \title{Plot the transformed data}
 \usage{
-plot_transform_effects(feature_dat, design, fn_out, chr_sel = "chr11")
+plot_transform_effects(feature_dat, design, fn_stub, chr_sel = "chr11")
 }
 \arguments{
 \item{feature_dat}{data.table with data columns to plot}
 
 \item{design}{table with design information}
 
-\item{fn_out}{output file name}
+\item{fn_stub}{prepended to output file name}
 
 \item{chr_sel}{example chromosome to plot}
 }

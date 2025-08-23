@@ -5,27 +5,28 @@
 \title{Preprocess ChIP-Seq counts per restriction fragment (RF)}
 \usage{
 preprocess_counts_per_rf(
-  rmap_file,
   fn_counts,
   fn_chr_info,
   dir_out,
+  fn_stub,
   thresh_len_min = 100L,
   thresh_len_max = 50000L,
   perform_qnorm = FALSE,
   plot_transformations = FALSE,
+  write_transf_to_file = FALSE,
   fixed_dispersion = -1,
   feature_ids = "all",
   seed = -1
 )
 }
 \arguments{
-\item{rmap_file}{Path to restriction digestion map (columns: chr, start, end)}
-
 \item{fn_counts}{Path to counts per interval table (columns: chr, start, end, counts_target1, ..., counts_targetN)}
 
 \item{fn_chr_info}{Path to chromosome info file (columns: chr, len, optional ploidy)}
 
 \item{dir_out}{Output directory for processed data and plots}
+
+\item{fn_stub}{Prepended to output file names}
 
 \item{thresh_len_min}{Minimum RF length in bp (default: 100)}
 
@@ -35,6 +36,8 @@ preprocess_counts_per_rf(
 
 \item{plot_transformations}{Logical; generate plots showing normalisation effects}
 
+\item{write_transf_to_file}{Logical; write intermediate transformed data to file}
+
 \item{fixed_dispersion}{Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically}
 
 \item{feature_ids}{Comma-separated sample IDs}
@@ -42,7 +45,7 @@ preprocess_counts_per_rf(
 \item{seed}{Random seed; -1 for no fixed seed}
 }
 \value{
-Void
+list of 1)Data table with counts transformations 2) feature_ids
 }
 \description{
 Applies Anscombe variance stabilising transformation, optional quantile normalisation,
