@@ -4,7 +4,6 @@
 #' and generates optional diagnostic plots.
 #'
 #' @param fn_counts Path to counts per interval table (columns: chr, start, end, counts_target1, ..., counts_targetN)
-#' @param fn_chr_info Path to chromosome info file (columns: chr, len, optional ploidy)
 #' @param dir_out Output directory for processed data and plots
 #' @param fn_stub Prepended to output file names
 #' @param thresh_len_min Minimum RF length in bp (default: 100)
@@ -13,16 +12,15 @@
 #' @param plot_transformations Logical; generate plots showing normalisation effects
 #' @param write_transf_to_file Logical; write intermediate transformed data to file
 #' @param fixed_dispersion Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically
-#' @param feature_ids Comma-separated sample IDs
+#' @param feature_ids Comma-separated sample IDs or 'all'
 #' @param seed Random seed; -1 for no fixed seed
 #'
-#' @importFrom edgeR estimateDisp
+#' @import fitdistrplus
 #' @import data.table
 #' @return list of 1)Data table with counts transformations 2) feature_ids
 #' @export
 preprocess_counts_per_rf <- function(
   fn_counts,
-  fn_chr_info,
   dir_out,
   fn_stub, 
   thresh_len_min = 100L,
@@ -39,7 +37,6 @@ preprocess_counts_per_rf <- function(
   if (!dir.exists(dir_out)) {
     dir.create(dir_out, recursive = TRUE)
   }
-
   if (seed != -1) {
     set.seed(as.integer(seed))
   }
@@ -63,30 +60,43 @@ preprocess_counts_per_rf <- function(
   }
   
   dat_counts[, fid := paste0(chr, '_', start, '_', end)]
-  dat_chr_info <- fread(fn_chr_info, header = TRUE, sep = "\t")
-  
-  # Select only chromosomes that are present in dat_chr_info
-  dat_counts <- dat_counts[(chr %in% dat_chr_info$chr), ]
   
   message("Filtering restriction fragments by length...")
   rf_lengths <- dat_counts$end - dat_counts$start
   dat_counts <- dat_counts[(
     rf_lengths >= thresh_len_min & rf_lengths <= thresh_len_max), ]
   
-  counts_only <- dat_counts[, feature_ids, with = FALSE]
-  if (fixed_dispersion == -1) {
-    message('Estimating dispersion using EdgeR common dispersion...')
-    disp <- suppressMessages(edgeR::estimateDisp(counts_only)$common.dispersion)
-    message('Estimated dispersion: ', disp)
-  } else {
-    disp <- fixed_dispersion
-  }
   
-  message("Performing Anscombe transformation...")
-  counts_transformed <- vst(counts_only, method = "anscombe.nb", dispersion = disp)
-  colnames(counts_transformed) <- paste0(colnames(counts_transformed), '_ansc')
-  # Add transformed counts to dat_counts
-  dat_counts <- cbind(dat_counts, counts_transformed)
+  # Estimate dispersion parameter for each feature separately
+  # NOTE:
+  # consider ZIMB fit (pscl::zeroinfl) in stead of just negative binomial
+  for(current_feature in feature_ids){
+    
+    counts_only <- dat_counts[, current_feature, with = FALSE]
+    if (fixed_dispersion == -1) {
+      current_fit <- fitdistrplus::fitdist(as.list(counts_only[, 1])[[1]], "nbinom")
+      current_disp <- 1/current_fit$estimate['size']
+      message(
+        'Estimated dispersion on ', 
+        current_feature, ': ', 
+        round(current_disp, digits = 5))
+    } else {
+      current_disp <- fixed_dispersion
+    }
+    
+    # message("Performing Anscombe transformation...")
+    counts_transformed <- as.data.table(vst(
+      counts_only, method = "anscombe.nb", dispersion = current_disp))
+    
+    setnames(
+      counts_transformed, 
+      old = current_feature, 
+      new = paste0(current_feature, '_ansc'))
+    
+    # Add transformed counts to dat_counts
+    dat_counts <- cbind(dat_counts, counts_transformed)
+    
+  }
   
   # Normalise quantiles between chromosomes
   # This is relevant when dealing with data with aneuploid origin

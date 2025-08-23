@@ -1,12 +1,3 @@
-#' Get the row from a quantile table to which a value belongs
-#'
-#' @param val numeric value
-#' @param qTable data.frame or data.table with a column "end"
-#' @return integer row number
-#' @export
-getQuantile <- function(val, qTable){
-  min(which(qTable[, "end"] >= val))
-}
 
 #' Write data.table to file with preferred settings
 #'
@@ -19,27 +10,6 @@ fwrite_tsv <- function(x, file){
     append = FALSE, quote = FALSE, 
     sep = "\t", eol = "\n", na = "NA", dec = ".", 
     row.names = FALSE, col.names = TRUE, scipen = 999999)
-}
-
-#' Prompt user for a yes/no answer
-#'
-#' @return TRUE, FALSE, or NA
-#' @export
-promptUser_yn <- function(){
-  if(interactive()){
-    usrInput <- readline(prompt = "(y/n) ")
-  } else {
-    message("(y/n) ")
-    usrInput <- readLines("stdin", n = 1)
-  }
-
-  if((grepl("^[Yy]$", usrInput)) | tolower(usrInput) == "yes"){
-    TRUE
-  } else if((grepl("^[Nn]$", usrInput)) | tolower(usrInput) == "no"){
-    FALSE
-  } else {
-    NA
-  }
 }
 
 #' Quantile normalize count data between chromosomes
@@ -167,6 +137,7 @@ regressDistance <- function(score_per_frag,
   # sampleID <- colnames(score_per_frag_c)[2]
   message('Performing regression on: ')
   for(current_feature in feature_ids){
+    
     message(current_feature)
     
     setnames(score_per_frag_c, old = current_feature, new = 'score')
@@ -208,19 +179,23 @@ regressDistance <- function(score_per_frag,
     score_per_frag_c <- cbind(score_per_frag_c, data.table(resid.pearson, resid.stud))
     
     if(plotResids){
+      message("Plotting residuals for feature: ", current_feature)
       
-      # Build a scatter plot pre-regression
+      score_per_frag_c[, chr := factor(chr, levels = unique(chr))]
+      
+      # Build a scatter plot pre-regression and color by chr
       scorePlot <- ggplot(score_per_frag_c, aes(x = len, y = score)) +
-        geom_point(alpha = 1, size = 2, stroke = 0) +
+        geom_point(alpha = 0.7, size = 2, aes(color = factor(chr))) +
         labs(title = paste0(current_feature, " ", toupper(regrType), " pre-regression"),
                       x = "Frag_length(bp)", y = current_feature)
+      
       ggsave(
         filename = paste0(outDir, fn_stub, '_', current_feature, "_pre-regression.pdf"), 
         plot = scorePlot)
       
       # Build a scatter plot of residuals
       residsPlot <- ggplot(score_per_frag_c, aes(x = len, y = resid.stud)) +
-        geom_point(alpha = 1, size = 2, stroke = 0) +
+        geom_point(alpha = 0.7, size = 2, aes(color = factor(chr))) +
         labs(title = paste0(current_feature, " ", toupper(regrType), " studentised residuals"),
                       x = "RFlength(bp)", y = "residual")
       ggsave(
@@ -240,9 +215,29 @@ regressDistance <- function(score_per_frag,
     # Merge the results in with the original data.table
     score_per_frag <- merge.data.table(
       x = score_per_frag, y = current_dat_sel, by = 'fid', all.x = TRUE)
+    
+    # Drop the columns with the residuals
+    score_per_frag_c[, resid.stud := NULL]
+    score_per_frag_c[, resid.pearson := NULL]
   }
   
-  message('Regression completed')
+  # Selec the score IDs
+  cids_score <- paste0(feature_ids, '_resid')
+  # Select the data to write to file
+  dat_out <- score_per_frag[, c(
+    'chr', 'start', 'end', cids_score), with = FALSE]
+  # Rename to [feature ID]_score
+  setnames(
+    dat_out, 
+    old = cids_score, 
+    new = gsub('_ansc.*_resid', '_score', cids_score))
+  
+  message('Writing scores to file: ', 
+          file.path(outDir, paste0(fn_stub, '_scores.tsv')))
+  fwrite_tsv(
+    dat_out, 
+    file = file.path(outDir, paste0(fn_stub, '_scores.tsv')))
+  
+  message('Done')
   return(score_per_frag)
 }
-

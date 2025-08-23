@@ -7,7 +7,6 @@
 regressDistance(
   score_per_frag,
   feature_ids,
-  rmap,
   fn_stub,
   regrType = "ols",
   plotResids = FALSE,
@@ -18,8 +17,6 @@ regressDistance(
 }
 \arguments{
 \item{score_per_frag}{data.table with preprocessed counts per fragment}
-
-\item{rmap}{data.table with rfID, chr, len}
 
 \item{regrType}{regression type: "ols", "pois", "nb", or "olslog"}
 

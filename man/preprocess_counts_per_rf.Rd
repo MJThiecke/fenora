@@ -6,7 +6,6 @@
 \usage{
 preprocess_counts_per_rf(
   fn_counts,
-  fn_chr_info,
   dir_out,
   fn_stub,
   thresh_len_min = 100L,
@@ -21,8 +20,6 @@ preprocess_counts_per_rf(
 }
 \arguments{
 \item{fn_counts}{Path to counts per interval table (columns: chr, start, end, counts_target1, ..., counts_targetN)}
-
-\item{fn_chr_info}{Path to chromosome info file (columns: chr, len, optional ploidy)}
 
 \item{dir_out}{Output directory for processed data and plots}
 
@@ -40,7 +37,7 @@ preprocess_counts_per_rf(
 
 \item{fixed_dispersion}{Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically}
 
-\item{feature_ids}{Comma-separated sample IDs}
+\item{feature_ids}{Comma-separated sample IDs or 'all'}
 
 \item{seed}{Random seed; -1 for no fixed seed}
 }

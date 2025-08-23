@@ -23,18 +23,12 @@ debug <- TRUE
 
 # Define options
 option_list <- list(
-  make_option(c("-w", "--wd"), type = "character", default = ".",
-              help = "Working directory [default: current dir]"),
   make_option(c("-o", "--outDir"), type = "character", default = ".",
               help = "Output directory [default: current dir]"),
   make_option(c("-f", "--fnOut"), type = "character", default = "transf_fig",
               help = "Output file name for transformation figures"),
-  make_option(c("-r", "--intervalMap"), type = "character", default = "GRCh37_HindIII.rmap",
-              help = "Bed-like file containing the intervals (required columns: chr, start, end)"),
   make_option(c("-c", "--cMatr"), type = "character",
               help = "Counts per interval table (tab-separated, with header)"),
-  make_option(c("-i", "--chrInfo"), type = "character",
-              help = "Chromosome info file (chr, len, ploidy). Determines which chromosomes are included"),
   make_option("--minLen", type = "integer", default = 100,
               help = "Lower limit of interval length (bp) [default: %default]"),
   make_option("--maxLen", type = "integer", default = 50000,
@@ -60,30 +54,23 @@ if (!debug) {
   args <- parse_args(parser)
 } else {
   args <- list(
-    wd = "/hpc/compgen/users/mthiecke/workspace/fenora/",
     outDir = "/hpc/compgen/users/mthiecke/workspace/fenora_test/out/",
-    intervalMap = "data/GRCh37_HindIII.rmap",
     cMatr = "data/test_counts.tsv",
-    chrInfo = "data/chromosome_info_default.txt",
     fnOut = "test",
-    minLen = 100L,
-    maxLen = 50000L,
-    qNorm = TRUE,
-    buildPlots = TRUE,
-    transfToFile = TRUE,
+    minLen = 100,
+    maxLen = 50000,
+    qNorm = FALSE,
+    buildPlots = FALSE,
+    transfToFile = FALSE,
     fixDisp = -1,
     featureIDs = 'all',
-    seed = 1337L
+    seed = 1337
   )
 }
-
-# Set working directory
-setwd(args$wd)
 
 # Run pre-processing
 preproc_dat <- preprocess_counts_per_rf(
   fn_counts = args$cMatr,
-  fn_chr_info = args$chrInfo,
   dir_out = args$outDir,
   fn_stub = args$fnOut,
   thresh_len_min = args$minLen,
@@ -91,24 +78,18 @@ preproc_dat <- preprocess_counts_per_rf(
   perform_qnorm = args$qNorm,
   plot_transformations = args$buildPlots,
   write_transf_to_file = args$transfToFile,
-  fixed_dispersion = args$fixDisp,
+  #fixed_dispersion = args$fixDisp,
   feature_ids = args$featureIDs,
   seed = args$seed
 )
 
-
 # Regress out chromosome length effects
-# TODO
-test <- regressDistance(
+regressDistance(
   score_per_frag = preproc_dat$preproc, 
   feature_ids = preproc_dat$feature_ids,
-  rmap = args$intervalMap, 
   fn_stub = args$fnOut,
   regrType = "ols",
-  plotResids = TRUE,
+  plotResids = args$buildPlots,
   outDir = args$outDir
   )
-  
-  
-  
   
