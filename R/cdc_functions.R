@@ -138,13 +138,12 @@ plot_transform_effects <- function(feature_dat,
 #' Perform regression on score per restriction fragment
 #'
 #' @param score_per_frag data.table with preprocessed counts per fragment
-#' @param rmap data.table with rfID, chr, len
 #' @param regrType regression type: "ols", "pois", "nb", or "olslog"
 #' @param isRef logical, if TRUE label as reference
 #' @param plotResids logical, whether to plot residuals
 #' @param outDir output directory
-#' @param include FALSE or numeric vector of length 2: include scores in interval
-#' @param sel numeric vector of row indices
+#' @param include numeric vector of length 2: include scores in interval
+#' @param nsamp integer specifying number to sample (if desired)
 #' @return list with residualsPerRF and lm.summary
 #' @import data.table
 #' @import ggplot2
@@ -152,72 +151,98 @@ plot_transform_effects <- function(feature_dat,
 #' @export
 regressDistance <- function(score_per_frag,
                             feature_ids,
-                            rmap,
+                            fn_stub,
                             regrType = "ols",
-                            isRef = FALSE,
                             plotResids = FALSE,
                             outDir = getwd(),
                             include = FALSE,
-                            sel = NA){
+                            nsamp = NA){
   stopifnot(regrType %in% c("ols", "pois", "nb", "olslog"))
+  stopifnot(c('start', 'end') %in% colnames(score_per_frag))
   
-  # data.table::setkey(score_per_frag, fid)
-  # sampleID <- colnames(score_per_frag)[2]
+  score_per_frag_c <- copy(score_per_frag)
+  score_per_frag_c[, len := end - start]
+  
+  # data.table::setkey(score_per_frag_c, fid)
+  # sampleID <- colnames(score_per_frag_c)[2]
+  message('Performing regression on: ')
   for(current_feature in feature_ids){
+    message(current_feature)
     
-    data.table::setnames(score_per_frag, old = current_feature, new = 'score')
+    setnames(score_per_frag_c, old = current_feature, new = 'score')
     
     if(is.numeric(include) && length(include) == 2){
-      score_per_frag <- score_per_frag[(!(score < include[1] | score > include[2])), ]
+      message(
+        'Retaining only scores within the specified range: [', 
+        include[1], ', ', include[2], '] for feature: ', current_feature, '\n')
+      score_per_frag_c <- score_per_frag_c[(score >= include[1] & score <= include[2]), ]
     }
     
-    browser()
+    if(is.numeric(nsamp)){
+      message("Sub-sampling ", nsamp, " rows from score_per_frag_c for regression.")
+      samp_ids <- sort(sample(
+        1:nrow(score_per_frag_c), 
+        size = min(nsamp, nrow(score_per_frag_c)), replace = FALSE))
+      score_per_frag_c <- score_per_frag_c[(samp_ids), ]
+      rm(samp_ids)
+    }
     
+    if(regrType == "nb"){
+      current.lm <- MASS::glm.nb(score ~ len, data = score_per_frag_c)
+      resid.pearson <- residuals(current.lm, type = "pearson")
+      resid.stud <- MASS::studres(current.lm)
+    } else if(regrType == "pois"){
+      current.lm <- glm(score ~ len, data = score_per_frag_c, family = poisson(link = "identity"))
+      resid.pearson <- residuals(current.lm, type = "pearson")
+      resid.stud <- MASS::studres(current.lm)
+    } else if(regrType == "ols"){
+      current.lm <- lm(score ~ len, data = score_per_frag_c)
+      resid.pearson <- residuals(current.lm)
+      resid.stud <- MASS::studres(current.lm)
+    } else if(regrType == "olslog"){
+      current.lm <- lm(score ~ log(len, base = 10), data = score_per_frag_c)
+      resid.pearson <- residuals(current.lm)
+      resid.stud <- MASS:studres(current.lm)
+    }
     
+    score_per_frag_c <- cbind(score_per_frag_c, data.table(resid.pearson, resid.stud))
     
-    data.table::setnames(score_per_frag, old = 'score', new = current_feature)
+    if(plotResids){
+      
+      # Build a scatter plot pre-regression
+      scorePlot <- ggplot(score_per_frag_c, aes(x = len, y = score)) +
+        geom_point(alpha = 1, size = 2, stroke = 0) +
+        labs(title = paste0(current_feature, " ", toupper(regrType), " pre-regression"),
+                      x = "Frag_length(bp)", y = current_feature)
+      ggsave(
+        filename = paste0(outDir, fn_stub, '_', current_feature, "_pre-regression.pdf"), 
+        plot = scorePlot)
+      
+      # Build a scatter plot of residuals
+      residsPlot <- ggplot(score_per_frag_c, aes(x = len, y = resid.stud)) +
+        geom_point(alpha = 1, size = 2, stroke = 0) +
+        labs(title = paste0(current_feature, " ", toupper(regrType), " studentised residuals"),
+                      x = "RFlength(bp)", y = "residual")
+      ggsave(
+        filename = paste0(outDir, fn_stub, "_", current_feature, "_", regrType, "_studentised_resids.pdf"), 
+        plot = residsPlot)
+    }
+    
+    # Reset 'score' to the original column  name
+    setnames(score_per_frag_c, old = 'score', new = current_feature)
+    
+    current_dat_sel <- score_per_frag_c[, .(fid, resid.stud)]
+    setnames(
+      current_dat_sel, 
+      old = 'resid.stud', 
+      new = paste0(current_feature, '_resid'))
+    
+    # Merge the results in with the original data.table
+    score_per_frag <- merge.data.table(
+      x = score_per_frag, y = current_dat_sel, by = 'fid', all.x = TRUE)
   }
   
-  
-  
-  
-
-  if(is.na(sel)){
-    sel <- sample(1:nrow(score_per_frag), size = min(30000, nrow(score_per_frag)))
-  }
-
-  if(regrType == "nb"){
-    current.lm <- MASS::glm.nb(score ~ len, data = score_per_frag)
-    resid.pearson <- residuals(current.lm, type = "pearson")
-    resid.stud <- MASS:studres(current.lm)
-  } else if(regrType == "pois"){
-    current.lm <- glm(score ~ len, data = score_per_frag, family = poisson(link = "identity"))
-    resid.pearson <- residuals(current.lm, type = "pearson")
-    resid.stud <- MASS:studres(current.lm)
-  } else if(regrType == "ols"){
-    current.lm <- lm(score ~ len, data = score_per_frag)
-    resid.pearson <- residuals(current.lm)
-    resid.stud <- MASS:studres(current.lm)
-  } else if(regrType == "olslog"){
-    current.lm <- lm(score ~ log(len, base = 10), data = score_per_frag)
-    resid.pearson <- residuals(current.lm)
-    resid.stud <- MASS:studres(current.lm)
-  }
-
-  score_per_frag.resid <- cbind(score_per_frag, data.table(resid.pearson, resid.stud))
-
-  if(plotResids){
-    expType <- ifelse(isRef, "Ref", "IP")
-    residsPlot <- ggplot2::ggplot(score_per_frag.resid[sel, ], ggplot2::aes(x = len, y = resid.pearson)) +
-      ggplot2::geom_point(alpha = 1, size = 2, stroke = 0) +
-      ggplot2::coord_cartesian(xlim = c(0, 50000)) +
-      ggplot2::labs(title = paste0(sampleID, " ", toupper(regrType), " pearson residuals"),
-                    x = "RFlength(bp)", y = "residual")
-
-    ggplot2::ggsave(filename = paste0(outDir, expType, "_", sampleID, "_", regrType, "_pearson_resids.png"), plot = residsPlot, width = 8, height = 8, units = "in", dpi = 300)
-    ggplot2::ggsave(filename = paste0(outDir, expType, "_", sampleID, "_", regrType, "_pearson_resids.pdf"), plot = residsPlot)
-  }
-
-  list(residualsPerRF = score_per_frag.resid, lm.summary = summary(current.lm))
+  message('Regression completed')
+  return(score_per_frag)
 }
 

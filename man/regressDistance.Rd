@@ -8,12 +8,12 @@ regressDistance(
   score_per_frag,
   feature_ids,
   rmap,
+  fn_stub,
   regrType = "ols",
-  isRef = FALSE,
   plotResids = FALSE,
   outDir = getwd(),
   include = FALSE,
-  sel = NA
+  nsamp = NA
 )
 }
 \arguments{
@@ -23,15 +23,15 @@ regressDistance(
 
 \item{regrType}{regression type: "ols", "pois", "nb", or "olslog"}
 
-\item{isRef}{logical, if TRUE label as reference}
-
 \item{plotResids}{logical, whether to plot residuals}
 
 \item{outDir}{output directory}
 
-\item{include}{FALSE or numeric vector of length 2: include scores in interval}
+\item{include}{numeric vector of length 2: include scores in interval}
 
-\item{sel}{numeric vector of row indices}
+\item{nsamp}{integer specifying number to sample (if desired)}
+
+\item{isRef}{logical, if TRUE label as reference}
 }
 \value{
 list with residualsPerRF and lm.summary

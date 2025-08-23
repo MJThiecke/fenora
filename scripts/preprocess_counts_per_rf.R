@@ -99,16 +99,14 @@ preproc_dat <- preprocess_counts_per_rf(
 
 # Regress out chromosome length effects
 # TODO
-regressDistance(
+test <- regressDistance(
   score_per_frag = preproc_dat$preproc, 
   feature_ids = preproc_dat$feature_ids,
   rmap = args$intervalMap, 
+  fn_stub = args$fnOut,
   regrType = "ols",
-  isRef = FALSE,
-  plotResids = FALSE,
-  outDir = args$outDir,
-  include = c(0, 1),
-  sel = NA
+  plotResids = TRUE,
+  outDir = args$outDir
   )
   
   
