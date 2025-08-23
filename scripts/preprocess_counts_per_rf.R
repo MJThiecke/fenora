@@ -5,18 +5,14 @@
 # another script.
 #
 # Author: Michiel J. Thiecke
-# Date: 01/11/2019
-# Updated: 14/08/2025 - Converted to optparse
 #
 #==============================================================================
 
 rm(list = ls())
 
-devtools::load_all('/hpc/compgen/users/mthiecke/workspace/fenora')
-devtools::document('/hpc/compgen/users/mthiecke/workspace/fenora')
-
 suppressPackageStartupMessages({
   library(optparse)
+  library(fenora)
 })
 
 debug <- TRUE
@@ -25,7 +21,7 @@ debug <- TRUE
 option_list <- list(
   make_option(c("-o", "--outDir"), type = "character", default = ".",
               help = "Output directory [default: current dir]"),
-  make_option(c("-f", "--fnOut"), type = "character", default = "transf_fig",
+  make_option(c("-f", "--fnOut"), type = "character", default = "fenora",
               help = "Output file name for transformation figures"),
   make_option(c("-c", "--cMatr"), type = "character",
               help = "Counts per interval table (tab-separated, with header)"),
@@ -54,14 +50,14 @@ if (!debug) {
   args <- parse_args(parser)
 } else {
   args <- list(
-    outDir = "/hpc/compgen/users/mthiecke/workspace/fenora_test/out/",
-    cMatr = "data/test_counts.tsv",
+    outDir = "/foo/bar/",
+    cMatr = "/foo/bar/fenora/data/test_counts.tsv",
     fnOut = "test",
     minLen = 100,
     maxLen = 50000,
-    qNorm = FALSE,
-    buildPlots = FALSE,
-    transfToFile = FALSE,
+    qNorm = TRUE,
+    buildPlots = TRUE,
+    transfToFile = TRUE,
     fixDisp = -1,
     featureIDs = 'all',
     seed = 1337
