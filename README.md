@@ -9,8 +9,12 @@
 
 Fenora provides functions for preprocessing and normalising sequencing-based 
 feature count data, preparing it for downstream regression analyses. It 
-supports a variety of assays such as ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, and 
-more.
+can be used for data from assays such as ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, 
+etc.
+Fenora is particularly well suited to pre-process count data in intervals of
+varying sizes (such as restriction fragments).
+Fenora is also capable of mitigating read-count effects of aneuploidy, using
+the argument --qNormBetweenChr.
 
 NOTE: Fenora does not make any assumptions on replicates. It is recommended to 
 perform replicate-comparisons and merging before running Fenora.
@@ -74,6 +78,9 @@ Please test the package using this mock dataset: fenora/data/test_counts.tsv
 
 Example command for the script fenora.R:
 Rscript ./scripts/fenora.R -o ./out -f test_run -c ./data/test_counts.tsv
+
+For more info, run:
+Rscript ./scripts/fenora.R --help
 
 
 ###############################################################################
