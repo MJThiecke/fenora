@@ -62,6 +62,7 @@ Dependencies:
 - aroma.light (install with BiocManager::install('aroma.light'))
 - MASS
 - fitdistrplus
+- edgeR (install with BiocManager::install('edgeR'))
 
 
 ###############################################################################
