@@ -7,15 +7,20 @@
 <pre>
 **Feature normalisation for regression analysis**
 
-Fenora provides functions for preprocessing and normalising sequencing-based feature count data, preparing it for downstream regression analyses. It supports a variety of assays such as ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, and more.
+Fenora provides functions for preprocessing and normalising sequencing-based 
+feature count data, preparing it for downstream regression analyses. It 
+supports a variety of assays such as ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, and 
+more.
 
-NOTE: Fenora does not make any assumptions on replicates. It is recommended to perform replicate-comparisons and merging before running Fenora.
+NOTE: Fenora does not make any assumptions on replicates. It is recommended to 
+perform replicate-comparisons and merging before running Fenora.
 
 ---
 
 ## ✨ Overview
 
-Fenora is designed to take **feature count matrices** (bed-like format with genomic coordinates) and perform:
+Fenora is designed to take **feature count matrices** (bed-like format with 
+genomic coordinates) and perform:
 
 - **Filtering** intervals by length  
 - **Anscombe variance-stabilising transformation**  
@@ -35,7 +40,8 @@ Fenora expects a **bed-like file** with the following columns:
 | 1   | 16008 | 24571 | 5678     | 1234     | ... | ...      |
 
 - **chr, start, end** → genomic interval (restriction fragment, peak, or window)  
-- **feature1 ... featureN** → counts from sequencing assays (ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, etc.)  
+- **feature1 ... featureN** → counts from quantitative sequencing assays 
+(e.g., ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, etc.)  
 
 ---
 
