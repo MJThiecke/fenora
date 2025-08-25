@@ -39,10 +39,10 @@ perform:
 
 Fenora expects a bed-like file with the following columns:
 
-| chr | start | end | feature1 | feature2 | ... | featureN |
-|-----|-------|-----|----------|----------|-----|----------|
-| 1   | 1     | 16007 | 12345    | 3456     | ... | ...      |
-| 1   | 16008 | 24571 | 5678     | 1234     | ... | ...      |
+|  chr   | start |  end  | feature1 | feature2 | ... | featureN |
+|--------|-------|-------|----------|----------|-----|----------|
+|  chr1  | 1     | 16007 | 12345    | 3456     | ... | ...      |
+|  chr1  | 16008 | 24571 | 5678     | 1234     | ... | ...      |
 
 - chr, start, end: genomic interval (restriction fragment, peak, or window)  
 - feature1 ... featureN: counts from quantitative sequencing assays (e.g., 
