@@ -1,8 +1,6 @@
 #==============================================================================
 #
-# Pre-processing and plotting of feature counts for OLS regression
-# This script is meant to be executed manually. It should not be executed by
-# another script.
+# Pre-processing feature counts in genomic intervals of arbitrary length.
 #
 # Author: Michiel J. Thiecke
 #
@@ -10,21 +8,12 @@
 
 rm(list = ls())
 
-# suppressPackageStartupMessages({
-#   library(optparse)
-#   #library(data.table)
-#   #library(ggplot2)
-#   #library(ggrain)
-#   #library(aroma.light)
-#   #library(MASS)
-#   #library(fitdistrplus)
-#   library(fenora)
-# })
+suppressPackageStartupMessages({
+  library(optparse)
+  library(fenora)
+})
 
-devtools::document()
-devtools::load_all()
-
-debug <- TRUE
+debug <- FALSE
 
 # Define options
 option_list <- list(
@@ -59,8 +48,8 @@ if (!debug) {
   args <- parse_args(parser)
 } else {
   args <- list(
-    outDir = "/hpc/compgen/users/mthiecke/workspace/fenora_test/",
-    cMatr = "/hpc/compgen/users/mthiecke/workspace/fenora/data/test_counts.tsv",
+    outDir = "[your_dir]",
+    cMatr = "[your_dir]/fenora/data/test_counts.tsv",
     fnOut = "test",
     minLen = 100,
     maxLen = 50000,
