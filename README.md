@@ -1,13 +1,10 @@
-<pre> ```
-
+<pre>
 ███████ ███████ ███    ██  ██████  ██████   █████  
 ██      ██      ████   ██ ██    ██ ██   ██ ██   ██ 
 █████   █████   ██ ██  ██ ██    ██ ██████  ███████ 
 ██      ██      ██  ██ ██ ██    ██ ██   ██ ██   ██ 
 ██      ███████ ██   ████  ██████  ██   ██ ██   ██ 
-
-``` <pre>
-
+<pre>
 **Feature normalisation for regression analysis**
 
 Fenora provides functions for preprocessing and normalising sequencing-based feature count data, preparing it for downstream regression analyses. It supports a variety of assays such as ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, and more.
