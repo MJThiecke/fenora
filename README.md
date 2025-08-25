@@ -54,6 +54,8 @@ You can install Fenora from GitHub:
 install.packages("devtools")
 devtools::install_github("MJThiecke/fenora")
 
+A good starting point is to run scripts/fenora.R (See 'Test run' below)
+
 Dependencies:
 - optparse
 - data.table
@@ -68,12 +70,21 @@ Dependencies:
 ###############################################################################
 ## Test run
 
-Please test the package on: fenora/data/test_counts.tsv
+Please test the package using this mock dataset: fenora/data/test_counts.tsv
+
+Example command for the script fenora.R:
+Rscript ./scripts/fenora.R -o ./out -f test_run -c ./data/test_counts.tsv
 
 
 ###############################################################################
 # References
 
+Thiecke, M.J., Wutz, G., Muhar, M., Tang, W., Bevan, S., Malysheva, V., 
+Stocsits, R., Neumann, T., Zuber, J., Fraser, P. and Schoenfelder, S., 2020. 
+Cohesin-dependent and-independent mechanisms mediate chromosomal contacts 
+between promoters and enhancers. Cell reports, 32(3).
+
 Paul F. Harrison (2017). Varistran: Anscombe's variance stabilizing 
 transformation for RNA-seq gene expression data. The Journal of Open Source 
 Software 2 (16). doi:10.21105/joss.00257
+
