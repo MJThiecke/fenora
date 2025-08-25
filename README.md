@@ -5,7 +5,7 @@
 ██      ██      ██  ██ ██ ██    ██ ██   ██ ██   ██ 
 ██      ███████ ██   ████  ██████  ██   ██ ██   ██ 
 <pre>
-**Feature normalisation for regression analysis**
+~~Feature normalisation for regression analysis~~
 
 Fenora provides functions for preprocessing and normalising sequencing-based 
 feature count data, preparing it for downstream regression analyses. It 
@@ -15,37 +15,39 @@ more.
 NOTE: Fenora does not make any assumptions on replicates. It is recommended to 
 perform replicate-comparisons and merging before running Fenora.
 
----
 
-## Overview
+###############################################################################
+# Overview
 
-Fenora is designed to take **feature count matrices** (bed-like format with 
-genomic coordinates) and perform:
+Fenora is designed to take a feature count matrix (bed-like format with genomic
+coordinates) and perform:
 
-- **Filtering** intervals by length  
-- **Anscombe variance-stabilising transformation**  
-- **Quantile normalisation** across chromosomes (optional)  
-- **Diagnostic plots** to visualise normalisation effects  
-- **Export** of processed counts (scores) tables for downstream regression analysis  
+- Filtering intervals by length  
+- Anscombe variance-stabilising transformation
+- Quantile normalisation between features
+- Quantile normalisation between chromosomes (optional) 
+- Correcting for interval-size (makes intervals of different sizes comparable) 
+- Diagnostic plots to visualise normalisation effects  
+- Export of processed counts (scores) for downstream regression analysis  
 
----
 
-## Input format
+###############################################################################
+# Input format
 
-Fenora expects a **bed-like file** with the following columns:
+Fenora expects a bed-like file with the following columns:
 
 | chr | start | end | feature1 | feature2 | ... | featureN |
 |-----|-------|-----|----------|----------|-----|----------|
 | 1   | 1     | 16007 | 12345    | 3456     | ... | ...      |
 | 1   | 16008 | 24571 | 5678     | 1234     | ... | ...      |
 
-- **chr, start, end** → genomic interval (restriction fragment, peak, or window)  
-- **feature1 ... featureN** → counts from quantitative sequencing assays 
-(e.g., ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, etc.)  
+- chr, start, end: genomic interval (restriction fragment, peak, or window)  
+- feature1 ... featureN: counts from quantitative sequencing assays (e.g., 
+  ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, etc.)  
 
----
 
-## Installation
+###############################################################################
+# Installation
 
 You can install Fenora from GitHub:
 
@@ -62,5 +64,9 @@ Dependencies:
 - fitdistrplus
 
 
+###############################################################################
+## Test run
+
+Please test the package on: fenora/data/test_counts.tsv
 
 
