@@ -17,7 +17,7 @@ perform replicate-comparisons and merging before running Fenora.
 
 ---
 
-## ✨ Overview
+## Overview
 
 Fenora is designed to take **feature count matrices** (bed-like format with 
 genomic coordinates) and perform:
@@ -30,7 +30,7 @@ genomic coordinates) and perform:
 
 ---
 
-## 📂 Input format
+## Input format
 
 Fenora expects a **bed-like file** with the following columns:
 
@@ -45,10 +45,22 @@ Fenora expects a **bed-like file** with the following columns:
 
 ---
 
-## 🚀 Installation
+## Installation
 
-You can install the development version from GitHub:
+You can install Fenora from GitHub:
 
-```r
-# install.packages("devtools")
-devtools::install_github("yourusername/fenora")
+install.packages("devtools")
+devtools::install_github("MJThiecke/fenora")
+
+Dependencies:
+- optparse
+- data.table
+- ggplot2
+- ggrain
+- aroma.light
+- MASS
+- fitdistrplus
+
+
+
+
