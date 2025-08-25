@@ -69,4 +69,9 @@ Dependencies:
 
 Please test the package on: fenora/data/test_counts.tsv
 
+###############################################################################
+# References
 
+Paul F. Harrison (2017). Varistran: Anscombe's variance stabilizing 
+transformation for RNA-seq gene expression data. The Journal of Open Source 
+Software 2 (16). doi:10.21105/joss.00257
