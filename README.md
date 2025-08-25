@@ -59,7 +59,7 @@ Dependencies:
 - data.table
 - ggplot2
 - ggrain
-- aroma.light
+- aroma.light (install with BiocManager::install('aroma.light'))
 - MASS
 - fitdistrplus
 
@@ -68,6 +68,7 @@ Dependencies:
 ## Test run
 
 Please test the package on: fenora/data/test_counts.tsv
+
 
 ###############################################################################
 # References
