@@ -43,7 +43,7 @@ option_list <- list(
 
 if (!debug) {
   parser <- OptionParser(option_list = option_list,
-    description = "Pre-processing of ChIP-Seq counts per restriction fragment (RF). Uses Anscombe variance stabilising transformation and can optionally perform quantile normalisation to mitigate variance caused by aneuploidy."
+    description = "Pre-processing of feature counts per genomic interval. Uses Anscombe variance stabilising transformation and can optionally perform quantile normalisation to mitigate variance caused by aneuploidy."
   )
   args <- parse_args(parser)
 } else {
