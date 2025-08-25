@@ -10,7 +10,7 @@ preprocess_counts_per_rf(
   fn_stub,
   thresh_len_min = 100L,
   thresh_len_max = 50000L,
-  perform_qnorm = FALSE,
+  perform_qnorm_btchr = FALSE,
   plot_transformations = FALSE,
   write_transf_to_file = FALSE,
   fixed_dispersion = -1,
@@ -29,7 +29,7 @@ preprocess_counts_per_rf(
 
 \item{thresh_len_max}{Maximum RF length in bp (default: 50000)}
 
-\item{perform_qnorm}{Logical; perform quantile normalisation between chromosomes}
+\item{perform_qnorm_btchr}{Logical; perform quantile normalisation between chromosomes}
 
 \item{plot_transformations}{Logical; generate plots showing normalisation effects}
 

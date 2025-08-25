@@ -10,12 +10,21 @@
 
 rm(list = ls())
 
-suppressPackageStartupMessages({
-  library(optparse)
-  library(fenora)
-})
+# suppressPackageStartupMessages({
+#   library(optparse)
+#   #library(data.table)
+#   #library(ggplot2)
+#   #library(ggrain)
+#   #library(aroma.light)
+#   #library(MASS)
+#   #library(fitdistrplus)
+#   library(fenora)
+# })
 
-debug <- FALSE
+devtools::document()
+devtools::load_all()
+
+debug <- TRUE
 
 # Define options
 option_list <- list(
@@ -29,8 +38,8 @@ option_list <- list(
               help = "Lower limit of interval length (bp) [default: %default]"),
   make_option("--maxLen", type = "integer", default = 50000,
               help = "Upper limit of interval length length (bp) [default: %default]"),
-  make_option("--qNorm", type = "logical", default = FALSE,
-              help = "Perform quantile normalisation between chromosomes [default: %default]"),
+  make_option("--qNormBetweenChr", type = "logical", default = FALSE,
+              help = "Perform quantile normalisation between chromosomes. This is usefull when dealing with data from aneuploid origin. [default: %default]"),
   make_option("--buildPlots", type = "logical", default = FALSE,
               help = "Build figures showing effect of transformations [default: %default]"),
   make_option("--transfToFile", type = "logical", default = FALSE,
@@ -50,12 +59,12 @@ if (!debug) {
   args <- parse_args(parser)
 } else {
   args <- list(
-    outDir = "/foo/bar/",
-    cMatr = "/foo/bar/fenora/data/test_counts.tsv",
+    outDir = "/hpc/compgen/users/mthiecke/workspace/fenora_test/",
+    cMatr = "/hpc/compgen/users/mthiecke/workspace/fenora/data/test_counts.tsv",
     fnOut = "test",
     minLen = 100,
     maxLen = 50000,
-    qNorm = TRUE,
+    qNormBetweenChr = TRUE,
     buildPlots = TRUE,
     transfToFile = TRUE,
     fixDisp = -1,
@@ -71,10 +80,9 @@ preproc_dat <- preprocess_counts_per_rf(
   fn_stub = args$fnOut,
   thresh_len_min = args$minLen,
   thresh_len_max = args$maxLen,
-  perform_qnorm = args$qNorm,
+  perform_qnorm_btchr = args$qNormBetweenChr,
   plot_transformations = args$buildPlots,
   write_transf_to_file = args$transfToFile,
-  #fixed_dispersion = args$fixDisp,
   feature_ids = args$featureIDs,
   seed = args$seed
 )

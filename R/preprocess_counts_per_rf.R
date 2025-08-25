@@ -8,7 +8,7 @@
 #' @param fn_stub Prepended to output file names
 #' @param thresh_len_min Minimum RF length in bp (default: 100)
 #' @param thresh_len_max Maximum RF length in bp (default: 50000)
-#' @param perform_qnorm Logical; perform quantile normalisation between chromosomes
+#' @param perform_qnorm_btchr Logical; perform quantile normalisation between chromosomes
 #' @param plot_transformations Logical; generate plots showing normalisation effects
 #' @param write_transf_to_file Logical; write intermediate transformed data to file
 #' @param fixed_dispersion Fixed dispersion parameter for Anscombe transformation; -1 to estimate automatically
@@ -25,7 +25,7 @@ preprocess_counts_per_rf <- function(
   fn_stub, 
   thresh_len_min = 100L,
   thresh_len_max = 50000L,
-  perform_qnorm = FALSE,
+  perform_qnorm_btchr = FALSE,
   plot_transformations = FALSE,
   write_transf_to_file = FALSE,
   fixed_dispersion = -1,
@@ -100,20 +100,30 @@ preprocess_counts_per_rf <- function(
   
   # Normalise quantiles between chromosomes
   # This is relevant when dealing with data with aneuploid origin
-  if (perform_qnorm) {
+  if (perform_qnorm_btchr) {
     message("Performing between-chromosome quantile normalisation...")
     for(current_id in feature_ids){
       current_fdat <- dat_counts[, c(
         'chr', 'start', 'end', 'fid', 
         paste0(current_id, '_ansc')), with = FALSE]
-      counts_transformed <- normalizeQuantile.betweenChr(
+      counts_transformed <- normaliseQuantile_betweenChr(
         feature_dat = current_fdat,
         value_col = paste0(current_id, '_ansc')
       )
       # Add the quantile-normalised data to dat_counts
-      dat_counts <- merge.data.table(x = dat_counts, y = counts_transformed, by = 'fid')
+      dat_counts <- merge.data.table(
+        x = dat_counts, y = counts_transformed, by = 'fid')
     }
   }
+  
+  # Perform quantile normalisation between features
+  dat_qnorm <- normaliseQuantile_betweenFeature(
+    feature_dat = dat_counts,
+    features = feature_ids,
+    qnorm_bchr = perform_qnorm_btchr)
+  # Add the quantile-normalised data to dat_counts
+  dat_counts <- merge.data.table(
+    x = dat_counts, y = dat_qnorm, by = 'fid', all.x = TRUE)
   
   # Build plots that show the effect of anscombe and quantile transformations
   if (plot_transformations) {
@@ -124,8 +134,11 @@ preprocess_counts_per_rf <- function(
       feature = feature_ids,
       anscombe = paste0(feature_ids, '_ansc')
     )
-    if(perform_qnorm){
-      design[, q_norm := paste0(anscombe, '_qnorm')]
+    if(perform_qnorm_btchr){
+      design[, q_norm_btchr := paste0(anscombe, '_qnorm-btchr')]
+      design[, q_norm_btfeat := paste0(anscombe, '_qnorm-btchr-btfeat')]
+    } else {
+      design[, q_norm_btfeat := paste0(anscombe, '_qnorm-btfeat')]
     }
     
     # Build test plot
@@ -147,8 +160,11 @@ preprocess_counts_per_rf <- function(
     cols_out <- c(
       'chr', 'start', 'end', 
       feature_ids, paste0(feature_ids, '_ansc'))
-    if(perform_qnorm){
-      cols_out <- c(cols_out, paste0(feature_ids, '_ansc_qnorm'))
+    if(perform_qnorm_btchr){
+      cols_out <- c(cols_out, paste0(feature_ids, '_ansc_qnorm-btchr'))
+      cols_out <- c(cols_out, paste0(feature_ids, '_ansc_qnorm-btchr-btfeat'))
+    } else {
+      cols_out <- c(cols_out, paste0(feature_ids, '_ansc_qnorm-btfeat'))
     }
     
     fwrite_tsv(
@@ -158,10 +174,10 @@ preprocess_counts_per_rf <- function(
   }
   
   message("Preprocessing complete")
-  if(perform_qnorm){
-    fids_out <- paste0(feature_ids, '_ansc_qnorm')
+  if(perform_qnorm_btchr){
+    fids_out <- paste0(feature_ids, '_ansc_qnorm-btchr-btfeat')
   } else {
-    fids_out <- paste0(feature_ids, '_ansc')
+    fids_out <- paste0(feature_ids, '_ansc_qnorm-btfeat')
   }
   return(list(preproc = dat_counts, feature_ids = fids_out))
 }

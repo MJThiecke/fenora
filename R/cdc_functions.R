@@ -3,6 +3,7 @@
 #'
 #' @param x a data.table object
 #' @param file output file path
+#' @import data.table
 #' @export
 fwrite_tsv <- function(x, file){
   data.table::fwrite(
@@ -17,11 +18,11 @@ fwrite_tsv <- function(x, file){
 #' @param feature_dat data.table with columns fid and counts
 #' @param chrs vector of chromosomes to normalise between
 #' @param value_col name of the column in feature_dat that contains the values to normalize
-#' @return data.table with normalized counts
+#' @return data.table with normalised counts
 #' @import data.table
 #' @importFrom aroma.light normalizeQuantile
 #' @export
-normalizeQuantile.betweenChr <- function(feature_dat, 
+normaliseQuantile_betweenChr <- function(feature_dat, 
                                          chrs = paste0('chr', c(1:22, "X", "Y")),
                                          value_col
                                          ){
@@ -31,6 +32,8 @@ normalizeQuantile.betweenChr <- function(feature_dat,
   if(!value_col %in% colnames(feature_dat)){
     stop("The value column ", value_col, " was not in the feature_dat columns")
   }
+  
+  setorderv(feature_dat, cols = c('chr', 'start', 'end'))
   
   # Get the desired chromosomes that are present in the feature data
   chrs_sel <- feature_dat[, unique(chr)]
@@ -44,18 +47,75 @@ normalizeQuantile.betweenChr <- function(feature_dat,
   }
   
   # Perform quantile normalisation
-  val_per_chr.qnorm <- aroma.light::normalizeQuantile(val_per_chr)
+  val_per_chr_qnorm <- aroma.light::normalizeQuantile(val_per_chr)
 
   feature_dat[, value_qnorm := NA_real_]
   for(current_chr in chrs_sel){
     feature_dat[(chr == current_chr), 
-             value_qnorm := val_per_chr.qnorm[[current_chr]]]
+             value_qnorm := val_per_chr_qnorm[[current_chr]]]
   }
 
   fdat_out <- feature_dat[, .(fid, value_qnorm)]
-  data.table::setnames(fdat_out, 
+  setnames(fdat_out, 
                        old = 'value_qnorm', 
-                       new = paste0(value_col, '_qnorm'))
+                       new = paste0(value_col, '_qnorm-btchr'))
+  return(fdat_out)
+}
+
+#' Quantile normalize count data between features
+#' 
+#' @param feature_dat data.table with columns fid and counts
+#' @param features vector of feature names to normalise between
+#' @param qnorm_bchr logical, whether to select between-chr-normalised columns
+#' @return data.table with normalised counts
+#' @import data.table
+#' @importFrom aroma.light normalizeQuantile
+#' @export
+normaliseQuantile_betweenFeature <- function(feature_dat,
+                                             features,
+                                             qnorm_bchr = FALSE){
+  if(length(features) <= 1){
+    stop("Cannot perform quantile normalization with fewer than two features")
+  }
+  
+  if(qnorm_bchr){
+    if(!any(grepl('ansc_qnorm', colnames(feature_dat)))){
+      stop("qnorm_bchr is TRUE but did not find any columns ids matching 'ansc_qnorm'")
+    }
+    features_sel <- colnames(feature_dat)[grepl('_ansc_qnorm-btchr$', colnames(feature_dat))]
+  } else {
+    features_sel <- colnames(feature_dat)[grepl('_ansc$', colnames(feature_dat))]
+  }
+  
+  # Test whether all features to normailse are present in the selection
+  for(curent_feature in features){
+    if(!any(grepl(curent_feature, features_sel))){
+      stop("The feature ", curent_feature, " was not found in the feature_dat columns")
+    }
+  }
+  
+  val_per_feature <- list()
+  for(current_feature in features_sel){
+    vals <- as.list(feature_dat[, current_feature, with = FALSE])[[1]]
+    val_per_feature[[current_feature]] <- vals
+  }
+  
+  # Perform quantile normalisation
+  val_per_feature_qnorm <- aroma.light::normalizeQuantile(val_per_feature)
+  
+  # Add to data.table including fid
+  fdat_out <- cbind(feature_dat[, .(fid)], as.data.table(val_per_feature_qnorm))
+  # Rename
+  if(qnorm_bchr){
+    setnames(fdat_out, 
+             old = features_sel, 
+             new = paste0(features_sel, '-btfeat'))
+  } else {
+    setnames(fdat_out, 
+             old = features_sel, 
+             new = paste0(features_sel, '_qnorm-btfeat'))
+  }
+  
   return(fdat_out)
 }
 
@@ -72,8 +132,6 @@ plot_transform_effects <- function(feature_dat,
                                    design,
                                    fn_stub,
                                    chr_sel = 'chr11'){
-  
-  design[, c(colnames(design)), with = FALSE]
   design <- as.list(design)
   names(design) <- NULL
   design <- unlist(design)
@@ -95,7 +153,12 @@ plot_transform_effects <- function(feature_dat,
   feature_dat_m[, type := factor(type, levels = design)]
   
   plot_out <- ggplot(data = feature_dat_m, aes(x = type, y = value)) +
-    geom_rain()
+    geom_rain() +
+    # Set x-axis label angle to 45 degrees
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    # Set axis labels
+    xlab('Sample ID and Normalisation') +
+    ylab('(Transformed) Counts')
   
   fn_out <- paste0(fn_stub, '_transf_effects_', chr_sel, '.pdf')
   
@@ -133,8 +196,6 @@ regressDistance <- function(score_per_frag,
   score_per_frag_c <- copy(score_per_frag)
   score_per_frag_c[, len := end - start]
   
-  # data.table::setkey(score_per_frag_c, fid)
-  # sampleID <- colnames(score_per_frag_c)[2]
   message('Performing regression on: ')
   for(current_feature in feature_ids){
     
@@ -158,22 +219,30 @@ regressDistance <- function(score_per_frag,
       rm(samp_ids)
     }
     
-    if(regrType == "nb"){
-      current.lm <- MASS::glm.nb(score ~ len, data = score_per_frag_c)
-      resid.pearson <- residuals(current.lm, type = "pearson")
-      resid.stud <- MASS::studres(current.lm)
-    } else if(regrType == "pois"){
-      current.lm <- glm(score ~ len, data = score_per_frag_c, family = poisson(link = "identity"))
-      resid.pearson <- residuals(current.lm, type = "pearson")
-      resid.stud <- MASS::studres(current.lm)
-    } else if(regrType == "ols"){
+    #TODO implement alternative regressions
+    # if(regrType == "nb"){
+    #   current.lm <- MASS::glm.nb(score ~ len, data = score_per_frag_c)
+    #   resid.pearson <- residuals(current.lm, type = "pearson")
+    #   resid.stud <- MASS::studres(current.lm)
+    # } else if(regrType == "pois"){
+    #   current.lm <- glm(score ~ len, data = score_per_frag_c, family = poisson(link = "identity"))
+    #   resid.pearson <- residuals(current.lm, type = "pearson")
+    #   resid.stud <- MASS::studres(current.lm)
+    # } else if(regrType == "ols"){
+    #   current.lm <- lm(score ~ len, data = score_per_frag_c)
+    #   resid.pearson <- residuals(current.lm)
+    #   resid.stud <- MASS::studres(current.lm)
+    # } else if(regrType == "olslog"){
+    #   current.lm <- lm(score ~ log(len, base = 10), data = score_per_frag_c)
+    #   resid.pearson <- residuals(current.lm)
+    #   resid.stud <- MASS:studres(current.lm)
+    # }
+    if(regrType == "ols"){
       current.lm <- lm(score ~ len, data = score_per_frag_c)
       resid.pearson <- residuals(current.lm)
       resid.stud <- MASS::studres(current.lm)
-    } else if(regrType == "olslog"){
-      current.lm <- lm(score ~ log(len, base = 10), data = score_per_frag_c)
-      resid.pearson <- residuals(current.lm)
-      resid.stud <- MASS:studres(current.lm)
+    } else {
+      stop("Only 'ols' regression is currently implemented.")
     }
     
     score_per_frag_c <- cbind(score_per_frag_c, data.table(resid.pearson, resid.stud))
