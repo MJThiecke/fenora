@@ -19,7 +19,7 @@ NOTE: Fenora does not make any assumptions on replicates. It is recommended to
 perform replicate-comparisons and merging before running Fenora.
 
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Overview
 
 Fenora is designed to take a feature count table (see 'Input format'), and 
@@ -34,7 +34,7 @@ perform:
 - Export of processed counts (scores) for downstream regression analysis  
 
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Input format
 
 Fenora expects a bed-like file with the following columns:
@@ -49,7 +49,7 @@ Fenora expects a bed-like file with the following columns:
   ChIP-seq, CUT&Tag, ATAC-seq, RNA-seq, etc.)  
 
 
-###############################################################################
+#------------------------------------------------------------------------------
 # Installation
 
 You can install Fenora from GitHub:
@@ -60,18 +60,18 @@ devtools::install_github("MJThiecke/fenora")
 A good starting point is to run scripts/fenora.R (See 'Test run' below)
 
 Dependencies:
-- optparse
+- aroma.light (install with BiocManager::install('aroma.light'))
 - data.table
+- edgeR (install with BiocManager::install('edgeR'))
+- fitdistrplus
 - ggplot2
 - ggrain
-- aroma.light (install with BiocManager::install('aroma.light'))
 - MASS
-- fitdistrplus
-- edgeR (install with BiocManager::install('edgeR'))
+- optparse
 
 
-###############################################################################
-## Test run
+#------------------------------------------------------------------------------
+# Test run
 
 Please test the package using this mock dataset: fenora/data/test_counts.tsv
 
@@ -82,7 +82,7 @@ For more info, run:
 Rscript ./scripts/fenora.R --help
 
 
-###############################################################################
+#------------------------------------------------------------------------------
 # References
 
 Thiecke, M.J., Wutz, G., Muhar, M., Tang, W., Bevan, S., Malysheva, V., 
